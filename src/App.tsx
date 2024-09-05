@@ -1,5 +1,9 @@
-import { Chance } from "chance";
 import "./App.css";
+import { Chance } from "chance";
+import pngHeart from "./assets/heart.png";
+import pngDiamond from "./assets/diamond.png";
+import pngClub from "./assets/club.png";
+import pngSpade from "./assets/spade.png";
 import React from "react";
 import Victor from "victor";
 
@@ -50,6 +54,11 @@ function getCanonicalDotsInBounds(
   [x0, y0, w, h]: [number, number, number, number],
   side: -1 | 0 | 1
 ): Dot[] {
+  const SHRINK = 0.5;
+  x0 += ((1 - SHRINK) / 2) * w;
+  w *= SHRINK;
+  y0 += ((1 - SHRINK) / 2) * h;
+  h *= SHRINK;
   return points.map(({ x, y }) => ({
     key: -1,
     position: new Victor(x * w + x0, y * h + y0),
@@ -129,9 +138,7 @@ function getInitialDots(): Dot[] {
   }
   for (let i = 0; i <= 10; i++) {
     for (let j = 0; j <= 10; j++) {
-      if (i + j <= 10) {
-        counts.push([i, j]);
-      }
+      counts.push([i, j]);
     }
   }
 
@@ -151,9 +158,29 @@ function App() {
     dots: getInitialDots(),
     count: 0,
   }));
+  const [suitIndex, setSuitIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    const id = setTimeout(() => {
+      setState((state) => ({
+        dots: state.dots.map((d) => ({
+          ...d,
+          position: d.visible ? d.position : d.initialPosition,
+        })),
+        count: state.count,
+      }));
+    }, 1000);
+    return () => clearTimeout(id);
+  }, [state]);
+
+  const eitherLOrMBounds = typeof state.count == "number" ? M_BOUNDS : L_BOUNDS;
+  const eitherROrMBounds = typeof state.count == "number" ? M_BOUNDS : R_BOUNDS;
 
   return (
     <main
+      onAuxClick={() => {
+        setSuitIndex((x) => x + 1);
+      }}
       onDoubleClick={() => {
         const text = prompt("new count?", JSON.stringify(state.count));
         if (!text) return;
@@ -163,6 +190,24 @@ function App() {
       }}
     >
       <div className="board">
+        <div
+          className="card"
+          style={{
+            left: `${eitherLOrMBounds[0] * 100}%`,
+            top: `${eitherLOrMBounds[1] * 100}%`,
+            width: `${eitherLOrMBounds[2] * 100}%`,
+            height: `${eitherLOrMBounds[3] * 100}%`,
+          }}
+        />
+        <div
+          className="card"
+          style={{
+            left: `${eitherROrMBounds[0] * 100}%`,
+            top: `${eitherROrMBounds[1] * 100}%`,
+            width: `${eitherROrMBounds[2] * 100}%`,
+            height: `${eitherROrMBounds[3] * 100}%`,
+          }}
+        />
         {state.dots.map((d) => (
           <div
             key={d.key}
@@ -171,8 +216,13 @@ function App() {
               opacity: d.visible ? "100%" : "0%",
               left: `${d.position.x * 100}%`,
               top: `${d.position.y * 100}%`,
+              rotate: d.flipped ? "0.5turn" : "0turn",
             }}
-          ></div>
+          >
+            <img
+              src={[pngHeart, pngClub, pngDiamond, pngSpade][suitIndex % 4]}
+            />
+          </div>
         ))}
       </div>
     </main>

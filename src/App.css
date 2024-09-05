@@ -1,6 +1,7 @@
 body {
   overflow-x: hidden;
   overflow-y: hidden;
+  background-color: black;
 }
 
 .board {
@@ -10,17 +11,28 @@ body {
   left: 50%;
   top: 50%;
   translate: -50% -50%;
-  background-color: yellow;
+  background-color: black;
   position: fixed;
 }
 
-.dot {
-  width: 2svmin;
-  height: 2svmin;
-  border-radius: 50%;
-  translate: -50% -50%;
-  background-color: blue;
+.card {
+  background-color: white;
+  border-radius: 1svmin;
   position: absolute;
   transition-property: opacity, left, top;
   transition-duration: 1000ms;
+}
+
+.dot {
+  border-radius: 50%;
+  position: absolute;
+  transition-property: opacity, left, top, rotate;
+  transition-duration: 1000ms;
+
+  img {
+    width: 9svmin;
+    height: 9svmin;
+    translate: -50% -50%;
+    position: absolute;
+  }
 }
