@@ -1,13 +1,10 @@
 import "./App.css";
-import { Chance } from "chance";
 import pngHeart from "./assets/heart.png";
 import pngDiamond from "./assets/diamond.png";
 import pngClub from "./assets/club.png";
 import pngSpade from "./assets/spade.png";
 import React from "react";
 import Victor from "victor";
-
-const chance = new Chance();
 
 type Count = number | [number, number];
 
@@ -19,6 +16,8 @@ type Dot = {
   flipped: boolean;
   side: -1 | 0 | 1;
 };
+
+const MAX_DOTS = 10;
 
 const POINTS = (() => {
   const p = (x: number, y: number) => new Victor(x / 6, y / 6);
@@ -80,34 +79,83 @@ function getCanonicalDots(count: Count): Dot[] {
   }
 }
 
-function cost(adots: Dot[], bdots: Dot[]) {
-  return bdots
-    .map((b, i) => {
-      let totalCost = b.position.distanceSq(adots[i].position);
-      if (totalCost >= 1e-9) totalCost += 10000;
-      if (b.side != adots[i].side) totalCost += 100;
-      return totalCost;
-    })
-    .reduce((a, b) => a + b, 0);
-}
-
 function adapt(oldState: State, count: Count): State {
   let adots = oldState.dots;
   let bdots = getCanonicalDots(count);
-  let bestChoice = [adots, bdots];
-  let minCost = Number.POSITIVE_INFINITY;
-  for (let i = 0; i < 1000; i++) {
-    adots = chance.shuffle(adots);
-    adots.sort((a, b) => Number(b.visible) - Number(a.visible));
-    bdots = chance.shuffle(bdots);
-    const thisCost = cost(adots, bdots);
-    if (thisCost < minCost) {
-      minCost = thisCost;
-      bestChoice = [adots, bdots];
+
+  let bestPlan: [Dot[], Dot[]] = [[], []];
+  let bestCost = Infinity;
+
+  for (let k = 0; k < 32; k++) {
+    const u = new Victor(Math.cos(k), Math.sin(k));
+    adots.sort((p, q) => p.position.dot(u) - q.position.dot(u));
+    bdots.sort((p, q) => p.position.dot(u) - q.position.dot(u));
+
+    const SWITCH_COST = 1000;
+    const MOVE_COST = 100;
+    const F: number[][] = Array.from(Array(bdots.length + 1), () => []);
+    const D: boolean[][] = Array.from(Array(bdots.length + 1), () => []);
+
+    F[0][0] = 0;
+    D[0][0] = true;
+
+    for (let j = 1; j <= adots.length; j++) {
+      const c0 = adots[j - 1].visible ? SWITCH_COST : 0;
+      F[0][j] = F[0][j - 1] + c0;
+      D[0][j] = false;
+    }
+
+    for (let i = 1; i <= bdots.length; i++) {
+      F[i][0] = Infinity;
+      D[i][0] = false;
+    }
+
+    for (let i = 1; i <= bdots.length; i++) {
+      for (let j = 1; j <= adots.length; j++) {
+        const c0 = adots[j - 1].visible ? SWITCH_COST : 0;
+        const f0 = F[i][j - 1] + c0;
+        F[i][j] = f0;
+        D[i][j] = false;
+
+        const d1 = bdots[i - 1].position.distanceSq(adots[j - 1].position);
+        const c1 =
+          (adots[j - 1].visible ? 0 : SWITCH_COST) +
+          (d1 >= 1e-9 ? d1 + MOVE_COST : 0);
+        const f1 = F[i - 1][j - 1] + c1;
+        if (f1 < f0) {
+          F[i][j] = f1;
+          D[i][j] = true;
+        }
+      }
+    }
+
+    if (F[bdots.length][adots.length] < bestCost) {
+      bestCost = F[bdots.length][adots.length];
+      let i = bdots.length;
+      let j = adots.length;
+      const position: Map<number, number> = new Map();
+
+      while (i > 0) {
+        if (D[i][j]) {
+          position.set(adots[j - 1].key, i - 1);
+          i--;
+          j--;
+        } else {
+          j--;
+        }
+      }
+
+      adots.sort((u, v) => {
+        const uu = position.get(u.key) ?? 9999;
+        const vv = position.get(v.key) ?? 9999;
+        return uu - vv;
+      });
+
+      bestPlan = [[...adots], [...bdots]];
     }
   }
 
-  [adots, bdots] = bestChoice;
+  [adots, bdots] = bestPlan;
   adots = adots.map((a, i) => {
     const b = bdots[i];
     if (b) {
@@ -133,11 +181,11 @@ function adapt(oldState: State, count: Count): State {
 
 function getInitialDots(): Dot[] {
   const counts: Count[] = [];
-  for (let i = 0; i <= 10; i++) {
+  for (let i = 0; i <= MAX_DOTS; i++) {
     counts.push(i);
   }
-  for (let i = 0; i <= 10; i++) {
-    for (let j = 0; j <= 10; j++) {
+  for (let i = 0; i <= MAX_DOTS; i++) {
+    for (let j = 0; j <= MAX_DOTS; j++) {
       counts.push([i, j]);
     }
   }
@@ -151,6 +199,24 @@ function getInitialDots(): Dot[] {
     )
     .flatMap((d) => [d, d, d, d, d, d, d, d])
     .map((dot, index) => ({ ...dot, visible: false, key: index }));
+}
+
+function removeDot(state: State, key: number): State {
+  const dot = state.dots.find((d) => d.key == key);
+  if (!dot) return state;
+  const newDots = state.dots.map((d) =>
+    d == dot ? { ...d, visible: false } : d
+  );
+  const newCount: Count =
+    typeof state.count === "number"
+      ? state.count - 1
+      : dot.side < 0
+      ? [state.count[0] - 1, state.count[1]]
+      : dot.side > 0
+      ? [state.count[0], state.count[1] - 1]
+      : state.count;
+
+  return adapt({ dots: newDots, count: newCount }, newCount);
 }
 
 function App() {
@@ -181,15 +247,21 @@ function App() {
       onAuxClick={() => {
         setSuitIndex((x) => x + 1);
       }}
-      onDoubleClick={() => {
-        const text = prompt("new count?", JSON.stringify(state.count));
-        if (!text) return;
-        const count = JSON.parse(text);
-        const newState = adapt(state, count);
-        setState(newState);
-      }}
     >
-      <div className="board">
+      <div
+        className="board"
+        onClick={(event) => {
+          event.preventDefault();
+          const c = state.count;
+          if (typeof c == "number") {
+            const L = Math.floor(Math.random() * c);
+            const R = c - L;
+            setState((state) => adapt(state, [L, R]));
+          } else {
+            setState((state) => adapt(state, c[0] + c[1]));
+          }
+        }}
+      >
         <div
           className="card"
           style={{
@@ -197,6 +269,26 @@ function App() {
             top: `${eitherLOrMBounds[1] * 100}%`,
             width: `${eitherLOrMBounds[2] * 100}%`,
             height: `${eitherLOrMBounds[3] * 100}%`,
+          }}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const c = state.count;
+            if (typeof c === "number") {
+              if (c >= 10) {
+                setSuitIndex((x) => x + 1);
+              } else {
+                setState((state) => adapt(state, c + 1));
+              }
+            } else {
+              if (c[0] >= 10) {
+                setSuitIndex((x) => x + 1);
+              } else if (c[0] + c[1] >= 10) {
+                setState((state) => adapt(state, [c[0] + 1, c[1] - 1]));
+              } else {
+                setState((state) => adapt(state, [c[0] + 1, c[1]]));
+              }
+            }
           }}
         />
         <div
@@ -206,6 +298,26 @@ function App() {
             top: `${eitherROrMBounds[1] * 100}%`,
             width: `${eitherROrMBounds[2] * 100}%`,
             height: `${eitherROrMBounds[3] * 100}%`,
+          }}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const c = state.count;
+            if (typeof c === "number") {
+              if (c >= 10) {
+                setSuitIndex((x) => x + 1);
+              } else {
+                setState((state) => adapt(state, c + 1));
+              }
+            } else {
+              if (c[1] >= 10) {
+                setSuitIndex((x) => x + 1);
+              } else if (c[0] + c[1] >= 10) {
+                setState((state) => adapt(state, [c[0] - 1, c[1] + 1]));
+              } else {
+                setState((state) => adapt(state, [c[0], c[1] + 1]));
+              }
+            }
           }}
         />
         {state.dots.map((d) => (
@@ -220,7 +332,19 @@ function App() {
             }}
           >
             <img
+              style={{
+                pointerEvents: d.visible ? "initial" : "none",
+              }}
               src={[pngHeart, pngClub, pngDiamond, pngSpade][suitIndex % 4]}
+              onClick={
+                d.visible
+                  ? (event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setState((state) => removeDot(state, d.key));
+                    }
+                  : undefined
+              }
             />
           </div>
         ))}
