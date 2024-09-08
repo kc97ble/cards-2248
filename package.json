@@ -5,17 +5,18 @@
   "type": "module",
   "scripts": {
     "build": "tsc -b && vite build",
+    "deploy": "gh-pages --dist dist --remote @kc97ble",
     "dev": "vite",
     "postinstall": "sort-package-json",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "deploy": "gh-pages --dist dist --remote @kc97ble"
+    "preview": "vite preview"
   },
   "dependencies": {
     "chance": "^1.1.12",
     "clsx": "^2.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-helmet": "^6.1.0",
     "victor": "^1.1.0"
   },
   "devDependencies": {
@@ -23,6 +24,7 @@
     "@types/chance": "^1.1.6",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@types/react-helmet": "^6.1.11",
     "@types/victor": "^1.1.5",
     "@vitejs/plugin-react": "^4.3.1",
     "eslint": "^9.9.0",
