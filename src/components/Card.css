@@ -1,11 +1,22 @@
-.Card {
-  background-color: white;
+.Card_Surface,
+.Card_LabelGroup {
+  left: 0;
+  top: 0;
   border-radius: 1svmin;
   position: absolute;
-  transition-property: opacity, left, top;
+  transition-property: translate;
   transition-duration: 1000ms;
+  position: absolute;
 }
 
-.Card .Card__label {
+.Card_Surface {
+  background-color: white;
+}
+
+.Card_LabelGroup {
+  pointer-events: none;
+}
+
+.Card_LabelGroup .Card_LabelGroup__label {
   margin: 2svmin;
 }

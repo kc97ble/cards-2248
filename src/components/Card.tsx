@@ -1,10 +1,37 @@
 import "./Card.css";
 
 import React from "react";
-import { Bound, toPercentage } from "../utils/geometry";
+import { Bound, toSvmin } from "../utils/geometry";
 import Label from "./Label";
 
-type Props = {
+type Props$Surface = {
+  style?: React.CSSProperties;
+  children?: React.ReactNode;
+  bound: Bound;
+  onClick?: () => void;
+};
+
+function Surface({ style, bound, onClick }: Props$Surface) {
+  const [x, y, w, h] = bound;
+  return (
+    <div
+      className="Card_Surface"
+      style={{
+        ...style,
+        translate: [toSvmin(x), toSvmin(y)].join(" "),
+        width: toSvmin(w),
+        height: toSvmin(h),
+      }}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onClick?.();
+      }}
+    />
+  );
+}
+
+type Props$LabelGroup = {
   style?: React.CSSProperties;
   children?: React.ReactNode;
   bound: Bound;
@@ -12,58 +39,50 @@ type Props = {
   suitColor: "red" | "black";
   hideLeftLabels?: boolean;
   hideRightLabels?: boolean;
-  onClick?: () => void;
 };
 
-export default function Card({
+function LabelGroup({
   style,
   bound,
   label,
   suitColor,
   hideLeftLabels,
   hideRightLabels,
-  onClick,
-}: Props) {
+}: Props$LabelGroup) {
   const [x, y, w, h] = bound;
   return (
     <div
-      className="Card"
+      className="Card_LabelGroup"
       style={{
         ...style,
-        left: toPercentage(x),
-        top: toPercentage(y),
-        width: toPercentage(w),
-        height: toPercentage(h),
-      }}
-      onClick={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        onClick?.();
+        translate: [toSvmin(x), toSvmin(y)].join(" "),
+        width: toSvmin(w),
+        height: toSvmin(h),
       }}
     >
       <Label
-        className="Card__label"
+        className="Card_LabelGroup__label"
         style={{ top: 0, left: 0 }}
         label={label}
         suitColor={suitColor}
         hidden={hideLeftLabels}
       />
       <Label
-        className="Card__label"
+        className="Card_LabelGroup__label"
         style={{ top: 0, right: 0 }}
         label={label}
         suitColor={suitColor}
         hidden={hideRightLabels}
       />
       <Label
-        className="Card__label"
+        className="Card_LabelGroup__label"
         style={{ bottom: 0, left: 0, rotate: "0.5turn" }}
         label={label}
         suitColor={suitColor}
         hidden={hideLeftLabels}
       />
       <Label
-        className="Card__label"
+        className="Card_LabelGroup__label"
         style={{ bottom: 0, right: 0, rotate: "0.5turn" }}
         label={label}
         suitColor={suitColor}
@@ -72,3 +91,7 @@ export default function Card({
     </div>
   );
 }
+
+const Card = { Surface, LabelGroup };
+
+export default Card;

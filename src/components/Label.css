@@ -11,5 +11,4 @@
   transition-duration: 500ms, 1000ms;
   transition-property: opacity, background-color;
   width: 3svmin;
-  z-index: 1;
 }

@@ -6,7 +6,7 @@ import pngClub from "../assets/club.png";
 import pngSpade from "../assets/spade.png";
 import React from "react";
 import cx from "clsx";
-import { Point, toPercentage } from "../utils/geometry";
+import { Point, toSvmin } from "../utils/geometry";
 
 const SUIT = {
   heart: `url(${pngHeart})`,
@@ -52,14 +52,16 @@ export default function Pip({
       style={Object.assign<React.CSSProperties, unknown>(
         {
           ...style,
-          pointerEvents: visible ? "initial" : "none",
-          opacity: visible && suit ? "100%" : "0%",
-          scale: hidden ? "0% 100%" : "100% 100%",
-          rotate: flipped ? "0.5turn" : "0turn",
-          left: toPercentage(center[0]),
-          top: toPercentage(center[1]),
           backgroundColor:
             suit === "spade" || suit == "club" ? "#000000" : "#d40000",
+          opacity: visible && suit ? "100%" : "0%",
+          pointerEvents: visible ? "initial" : "none",
+          rotate: flipped ? "0.5turn" : "0turn",
+          scale: hidden ? "0% 100%" : "100% 100%",
+          translate: [
+            `calc(${toSvmin(center[0])} - 50%)`,
+            `calc(${toSvmin(center[1])} - 50%)`,
+          ].join(" "),
         },
         { "--mask-image": suit ? SUIT[suit] : undefined }
       )}

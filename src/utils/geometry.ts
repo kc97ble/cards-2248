@@ -5,3 +5,7 @@ export type Bound = [x: Ratio, y: Ratio, w: Ratio, h: Ratio];
 export function toPercentage(ratio: Ratio): string {
   return (ratio * 100).toFixed(6) + "%";
 }
+
+export function toSvmin(ratio: Ratio): string {
+  return (ratio * 100).toFixed(6) + "svmin";
+}

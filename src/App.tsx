@@ -307,19 +307,25 @@ function App() {
   return (
     <main>
       <div className="board">
-        <Card
+        <Card.Surface
+          bound={typeof state.count == "number" ? [...M_BOUNDS] : [...L_BOUNDS]}
+          onClick={clickLM}
+        />
+        <Card.Surface
+          bound={typeof state.count == "number" ? [...M_BOUNDS] : [...R_BOUNDS]}
+          onClick={clickRM}
+        />
+        <Card.LabelGroup
           bound={typeof state.count == "number" ? [...M_BOUNDS] : [...L_BOUNDS]}
           label={typeof state.count == "number" ? state.count : state.count[0]}
           suitColor={suitIndex % 2 ? "black" : "red"}
           hideRightLabels={typeof state.count == "number"}
-          onClick={clickLM}
         />
-        <Card
+        <Card.LabelGroup
           bound={typeof state.count == "number" ? [...M_BOUNDS] : [...R_BOUNDS]}
           label={typeof state.count == "number" ? state.count : state.count[1]}
           suitColor={suitIndex % 2 ? "black" : "red"}
           hideLeftLabels={typeof state.count == "number"}
-          onClick={clickRM}
         />
         {state.dots.map((d) => (
           <Pip
