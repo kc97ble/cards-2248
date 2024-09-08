@@ -285,7 +285,8 @@ function App() {
     setState((state) => {
       const c = state.count;
       if (typeof c == "number") {
-        const L = Math.floor(Math.random() * c);
+        // a random number from 0 to c, where 0 and c have less probabilities
+        const L = Math.round(Math.random() * c);
         const R = c - L;
         return adapt(state, [L, R]);
       } else {
