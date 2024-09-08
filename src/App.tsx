@@ -1,10 +1,9 @@
 import "./App.css";
-import pngHeart from "./assets/heart.png";
-import pngDiamond from "./assets/diamond.png";
-import pngClub from "./assets/club.png";
-import pngSpade from "./assets/spade.png";
+
 import React from "react";
 import Victor from "victor";
+import Card from "./components/Card";
+import Pip from "./components/Pip";
 
 type Count = number | [number, number];
 
@@ -34,7 +33,7 @@ const POINTS = (() => {
     [...d4, p(0, 3), p(6, 3), p(3, 1.5)],
     [...d4, p(0, 3), p(6, 3), p(3, 1.5), p(3, 4.5)],
     [...d8, p(3, 3)],
-    [...d8, p(3, 1.5), p(3, 4.5)],
+    [...d8, p(3, 1), p(3, 5)],
   ] as const;
 })();
 
@@ -53,11 +52,12 @@ function getCanonicalDotsInBounds(
   [x0, y0, w, h]: [number, number, number, number],
   side: -1 | 0 | 1
 ): Dot[] {
-  const SHRINK = 0.5;
-  x0 += ((1 - SHRINK) / 2) * w;
-  w *= SHRINK;
-  y0 += ((1 - SHRINK) / 2) * h;
-  h *= SHRINK;
+  const SHRINK_X = 0.5;
+  const SHRINK_Y = 0.6;
+  x0 += ((1 - SHRINK_X) / 2) * w;
+  w *= SHRINK_X;
+  y0 += ((1 - SHRINK_Y) / 2) * h;
+  h *= SHRINK_Y;
   return points.map(({ x, y }) => ({
     key: -1,
     position: new Victor(x * w + x0, y * h + y0),
@@ -220,10 +220,12 @@ function removeDot(state: State, key: number): State {
 }
 
 function App() {
-  const [state, setState] = React.useState<State>(() => ({
-    dots: getInitialDots(),
-    count: 0,
-  }));
+  const [state, setState] = React.useState<State>(() =>
+    adapt(
+      { dots: getInitialDots(), count: 0 },
+      Math.floor(Math.random() * 10) + 1
+    )
+  );
   const [suitIndex, setSuitIndex] = React.useState(0);
 
   React.useEffect(() => {
@@ -239,114 +241,95 @@ function App() {
     return () => clearTimeout(id);
   }, [state]);
 
-  const eitherLOrMBounds = typeof state.count == "number" ? M_BOUNDS : L_BOUNDS;
-  const eitherROrMBounds = typeof state.count == "number" ? M_BOUNDS : R_BOUNDS;
+  // TODO: implement class State
+
+  const clickLM = () => {
+    const c = state.count;
+    if (typeof c === "number") {
+      if (c >= 10) {
+        setSuitIndex((x) => x + 1);
+      } else {
+        setState((state) => adapt(state, c + 1));
+      }
+    } else {
+      if (c[0] >= 10) {
+        setSuitIndex((x) => x + 1);
+      } else if (c[0] + c[1] >= 10) {
+        setState((state) => adapt(state, [c[0] + 1, c[1] - 1]));
+      } else {
+        setState((state) => adapt(state, [c[0] + 1, c[1]]));
+      }
+    }
+  };
+
+  const clickRM = () => {
+    const c = state.count;
+    if (typeof c === "number") {
+      if (c >= 10) {
+        setSuitIndex((x) => x + 1);
+      } else {
+        setState((state) => adapt(state, c + 1));
+      }
+    } else {
+      if (c[1] >= 10) {
+        setSuitIndex((x) => x + 1);
+      } else if (c[0] + c[1] >= 10) {
+        setState((state) => adapt(state, [c[0] - 1, c[1] + 1]));
+      } else {
+        setState((state) => adapt(state, [c[0], c[1] + 1]));
+      }
+    }
+  };
+
+  const clickBoard = React.useCallback(() => {
+    setState((state) => {
+      const c = state.count;
+      if (typeof c == "number") {
+        const L = Math.floor(Math.random() * c);
+        const R = c - L;
+        return adapt(state, [L, R]);
+      } else {
+        return adapt(state, c[0] + c[1]);
+      }
+    });
+  }, []);
+
+  React.useEffect(() => {
+    const handler = (event: Event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      clickBoard();
+    };
+    document.body.addEventListener("click", handler);
+    return () => document.body.removeEventListener("click", handler);
+  }, [clickBoard]);
 
   return (
-    <main
-      onAuxClick={() => {
-        setSuitIndex((x) => x + 1);
-      }}
-    >
-      <div
-        className="board"
-        onClick={(event) => {
-          event.preventDefault();
-          const c = state.count;
-          if (typeof c == "number") {
-            const L = Math.floor(Math.random() * c);
-            const R = c - L;
-            setState((state) => adapt(state, [L, R]));
-          } else {
-            setState((state) => adapt(state, c[0] + c[1]));
-          }
-        }}
-      >
-        <div
-          className="card"
-          style={{
-            left: `${eitherLOrMBounds[0] * 100}%`,
-            top: `${eitherLOrMBounds[1] * 100}%`,
-            width: `${eitherLOrMBounds[2] * 100}%`,
-            height: `${eitherLOrMBounds[3] * 100}%`,
-          }}
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            const c = state.count;
-            if (typeof c === "number") {
-              if (c >= 10) {
-                setSuitIndex((x) => x + 1);
-              } else {
-                setState((state) => adapt(state, c + 1));
-              }
-            } else {
-              if (c[0] >= 10) {
-                setSuitIndex((x) => x + 1);
-              } else if (c[0] + c[1] >= 10) {
-                setState((state) => adapt(state, [c[0] + 1, c[1] - 1]));
-              } else {
-                setState((state) => adapt(state, [c[0] + 1, c[1]]));
-              }
-            }
-          }}
+    <main>
+      <div className="board">
+        <Card
+          bound={typeof state.count == "number" ? [...M_BOUNDS] : [...L_BOUNDS]}
+          label={typeof state.count == "number" ? state.count : state.count[0]}
+          suitColor={suitIndex % 2 ? "black" : "red"}
+          hideRightLabels={typeof state.count == "number"}
+          onClick={clickLM}
         />
-        <div
-          className="card"
-          style={{
-            left: `${eitherROrMBounds[0] * 100}%`,
-            top: `${eitherROrMBounds[1] * 100}%`,
-            width: `${eitherROrMBounds[2] * 100}%`,
-            height: `${eitherROrMBounds[3] * 100}%`,
-          }}
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            const c = state.count;
-            if (typeof c === "number") {
-              if (c >= 10) {
-                setSuitIndex((x) => x + 1);
-              } else {
-                setState((state) => adapt(state, c + 1));
-              }
-            } else {
-              if (c[1] >= 10) {
-                setSuitIndex((x) => x + 1);
-              } else if (c[0] + c[1] >= 10) {
-                setState((state) => adapt(state, [c[0] - 1, c[1] + 1]));
-              } else {
-                setState((state) => adapt(state, [c[0], c[1] + 1]));
-              }
-            }
-          }}
+        <Card
+          bound={typeof state.count == "number" ? [...M_BOUNDS] : [...R_BOUNDS]}
+          label={typeof state.count == "number" ? state.count : state.count[1]}
+          suitColor={suitIndex % 2 ? "black" : "red"}
+          hideLeftLabels={typeof state.count == "number"}
+          onClick={clickRM}
         />
         {state.dots.map((d) => (
-          <div
+          <Pip
             key={d.key}
-            className="dot"
-            style={{
-              opacity: d.visible ? "100%" : "0%",
-              left: `${d.position.x * 100}%`,
-              top: `${d.position.y * 100}%`,
-              rotate: d.flipped ? "0.5turn" : "0turn",
-            }}
-          >
-            <img
-              style={{
-                pointerEvents: d.visible ? "initial" : "none",
-              }}
-              src={[pngHeart, pngClub, pngDiamond, pngSpade][suitIndex % 4]}
-              onClick={
-                d.visible
-                  ? (event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      setState((state) => removeDot(state, d.key));
-                    }
-                  : undefined
-              }
-            />
-          </div>
+            center={[d.position.x, d.position.y]}
+            visible={d.visible}
+            flipped={d.flipped}
+            suitIndex={suitIndex}
+            onClick={() => setState((state) => removeDot(state, d.key))}
+          />
         ))}
       </div>
     </main>

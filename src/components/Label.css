@@ -1,0 +1,15 @@
+.Label {
+  background-color: var(--background-color);
+  display: flex;
+  height: 20svmin;
+  mask-image: var(--mask-image);
+  mask-mode: luminance;
+  mask-position: top;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  position: absolute;
+  transition-duration: 500ms, 1000ms;
+  transition-property: opacity, background-color;
+  width: 3svmin;
+  z-index: 1;
+}

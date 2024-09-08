@@ -1,0 +1,11 @@
+.Card {
+  background-color: white;
+  border-radius: 1svmin;
+  position: absolute;
+  transition-property: opacity, left, top;
+  transition-duration: 1000ms;
+}
+
+.Card .Card__label {
+  margin: 2svmin;
+}
