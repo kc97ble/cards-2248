@@ -11,5 +11,5 @@
   mask-size: contain;
   mask-position: center;
   mask-repeat: no-repeat;
-  mask-mode: luminance;
+  mask-mode: alpha;
 }

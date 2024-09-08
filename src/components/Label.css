@@ -3,7 +3,7 @@
   display: flex;
   height: 20svmin;
   mask-image: var(--mask-image);
-  mask-mode: luminance;
+  mask-mode: alpha;
   mask-position: top;
   mask-repeat: no-repeat;
   mask-size: contain;
