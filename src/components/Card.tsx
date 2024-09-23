@@ -22,6 +22,15 @@ function Surface({ style, bound, onClick }: Props$Surface) {
         width: toSvmin(w),
         height: toSvmin(h),
       }}
+      onTouchStart={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onClick?.();
+      }}
+      onTouchEnd={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      }}
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();

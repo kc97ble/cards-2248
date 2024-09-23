@@ -65,6 +65,23 @@ export default function Pip({
         },
         { "--mask-image": suit ? SUIT[suit] : undefined }
       )}
+      onTouchStart={
+        visible && onClick
+          ? (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onClick();
+            }
+          : undefined
+      }
+      onTouchEnd={
+        visible && onClick
+          ? (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+          : undefined
+      }
       onClick={
         visible && onClick
           ? (event) => {

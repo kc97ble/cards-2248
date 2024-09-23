@@ -86,8 +86,9 @@ function adapt(oldState: State, count: Count): State {
   let bestPlan: [Dot[], Dot[]] = [[], []];
   let bestCost = Infinity;
 
-  for (let k = 0; k < 32; k++) {
-    const u = new Victor(Math.cos(k), Math.sin(k));
+  for (let k = 0; k < 16; k++) {
+    const t = (Math.PI * k) / 16;
+    const u = new Victor(Math.cos(t), Math.sin(t));
     adots.sort((p, q) => p.position.dot(u) - q.position.dot(u));
     bdots.sort((p, q) => p.position.dot(u) - q.position.dot(u));
 
@@ -299,10 +300,18 @@ function App() {
     const handler = (event: Event) => {
       event.preventDefault();
       event.stopPropagation();
-      clickBoard();
+      if (event.type === "click" || event.type === "touchstart") {
+        clickBoard();
+      }
     };
-    document.body.addEventListener("click", handler);
-    return () => document.body.removeEventListener("click", handler);
+    document.addEventListener("touchstart", handler);
+    document.addEventListener("touchend", handler);
+    document.addEventListener("click", handler);
+    return () => {
+      document.removeEventListener("touchstart", handler);
+      document.removeEventListener("touchend", handler);
+      document.removeEventListener("click", handler);
+    };
   }, [clickBoard]);
 
   return (
